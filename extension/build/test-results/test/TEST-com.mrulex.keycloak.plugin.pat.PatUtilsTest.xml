@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.mrulex.keycloak.plugin.pat.PatUtilsTest" tests="32" skipped="0" failures="0" errors="0" timestamp="2026-04-06T14:00:17.994Z" hostname="slimbook" time="4.012">
+  <properties/>
+  <testcase name="validateTokenName_duplicateName_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="1.401"/>
+  <testcase name="verifyToken_returnsFalseForWrongPlaintext()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="1.116"/>
+  <testcase name="validateExpires_pastDate_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.003"/>
+  <testcase name="isExpired_malformedReturnsFalse()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.003"/>
+  <testcase name="validateRoles_nonEmptyList_noException()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateTokenName_tooLong_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.005"/>
+  <testcase name="validateExpires_invalidFormat_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="buildCredential_setsTypeAndLabel()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.003"/>
+  <testcase name="validateExpires_futureDate_noException()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="extractCredentialData_noExpires_returnsNull()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.021"/>
+  <testcase name="validateTokenName_validName_noException()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateExpires_blank_noException()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="buildCredential_withExpires_includesField()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.003"/>
+  <testcase name="isExpired_pastReturnsTrue()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="isExpired_futureReturnsFalse()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="generateToken_isUrlSafe()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="verifyToken_returnsTrueForCorrectPlaintext()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.957"/>
+  <testcase name="generateToken_isUnique()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateRoles_empty_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="buildCredential_noExpires_omitsField()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="extractCredentialData_roundtrip()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.007"/>
+  <testcase name="generateToken_is64Chars()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="validateTokenName_uppercase_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="isExpired_nullReturnsFalse()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="isExpired_blankReturnsFalse()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="extractHash_roundtrip()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateTokenName_nullName_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateTokenName_maxLength_noException()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateExpires_null_noException()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <testcase name="hashToken_producesArgon2IdHash()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.432"/>
+  <testcase name="validateTokenName_startsWithDigit_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.002"/>
+  <testcase name="validateRoles_null_throws400()" classname="com.mrulex.keycloak.plugin.pat.PatUtilsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/home/ruben/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.12/be4984cb6fd1ef1d11f218a648889dfda44b8a15/byte-buddy-agent-1.14.12.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>
