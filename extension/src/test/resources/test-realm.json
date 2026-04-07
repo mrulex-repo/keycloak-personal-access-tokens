@@ -12,6 +12,30 @@
       "directAccessGrantsEnabled": true,
       "redirectUris": ["*"],
       "webOrigins": ["*"]
+    },
+    {
+      "clientId": "pat-test-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "authenticationFlowBindingOverrides": {
+        "direct_grant": "a1b2c3d4-1234-5678-abcd-ef1234567890"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "profile", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"],
+      "protocolMappers": [
+        {
+          "name": "PAT Roles Filter",
+          "protocol": "openid-connect",
+          "protocolMapper": "pat-roles-token-mapper",
+          "consentRequired": false,
+          "config": {
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "roles": {
@@ -20,6 +44,25 @@
       { "name": "maven-deploy", "description": "Deploy access to Maven" }
     ]
   },
+  "authenticationFlows": [
+    {
+      "id": "a1b2c3d4-1234-5678-abcd-ef1234567890",
+      "alias": "pat-direct-grant",
+      "description": "Direct Grant using Personal Access Tokens",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "pat-basic-auth",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ],
   "users": [
     {
       "username": "alice",
@@ -29,7 +72,8 @@
       "lastName": "Test",
       "enabled": true,
       "requiredActions": [],
-      "credentials": [{ "type": "password", "value": "alicepass", "temporary": false }]
+      "credentials": [{ "type": "password", "value": "alicepass", "temporary": false }],
+      "realmRoles": ["maven-read", "maven-deploy"]
     },
     {
       "username": "bruteuser",
@@ -40,6 +84,16 @@
       "enabled": true,
       "requiredActions": [],
       "credentials": [{ "type": "password", "value": "brutepass", "temporary": false }]
+    },
+    {
+      "username": "carol",
+      "email": "carol@test.local",
+      "emailVerified": true,
+      "firstName": "Carol",
+      "lastName": "NoPat",
+      "enabled": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "carolpass", "temporary": false }]
     }
   ]
 }
