@@ -1,0 +1,45 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "bruteForceProtected": true,
+  "failureFactor": 3,
+  "waitIncrementSeconds": 60,
+  "clients": [
+    {
+      "clientId": "test-client",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "maven-read",   "description": "Read access to Maven" },
+      { "name": "maven-deploy", "description": "Deploy access to Maven" }
+    ]
+  },
+  "users": [
+    {
+      "username": "alice",
+      "email": "alice@test.local",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Test",
+      "enabled": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "alicepass", "temporary": false }]
+    },
+    {
+      "username": "bruteuser",
+      "email": "bruteuser@test.local",
+      "emailVerified": true,
+      "firstName": "Brute",
+      "lastName": "User",
+      "enabled": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "brutepass", "temporary": false }]
+    }
+  ]
+}

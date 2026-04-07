@@ -6,6 +6,7 @@ import com.password4j.Argon2Function;
 import com.password4j.Password;
 import com.password4j.types.Argon2;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.credential.CredentialModel;
 import org.keycloak.common.ClientConnection;
@@ -178,7 +179,10 @@ public final class PatUtils {
         if (protector == null) return;
         if (protector.isTemporarilyDisabled(session, realm, user)) {
             throw new WebApplicationException(
-                    Response.status(429).entity("Too many failed attempts — account temporarily locked").build());
+                    Response.status(429)
+                            .entity("Too many failed attempts — account temporarily locked")
+                            .type(MediaType.TEXT_PLAIN_TYPE)
+                            .build());
         }
     }
 
@@ -195,6 +199,9 @@ public final class PatUtils {
 
     private static WebApplicationException badRequest(String message) {
         return new WebApplicationException(
-                Response.status(Response.Status.BAD_REQUEST).entity(message).build());
+                Response.status(Response.Status.BAD_REQUEST)
+                        .entity(message)
+                        .type(MediaType.TEXT_PLAIN_TYPE)
+                        .build());
     }
 }
