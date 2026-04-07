@@ -1,0 +1,12 @@
+{
+  "name": "@mrulex/keycloak-pat-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.0.0"
+  }
+}

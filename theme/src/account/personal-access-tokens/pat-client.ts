@@ -23,7 +23,10 @@ async function fetchJson<T>(
       ...options?.headers,
     },
   });
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(body || `${response.status} ${response.statusText}`);
+  }
   return response.json() as Promise<T>;
 }
 

@@ -26,12 +26,17 @@ function validateName(name: string): string | undefined {
   return undefined;
 }
 
+function dateInputToIso(dateValue: string): string {
+  return new Date(dateValue + "T23:59:59Z").toISOString();
+}
+
 function useCreatePatForm(ctx: PatApiContext, onCreated: (pat: PatCreated) => void) {
   const [name, setName] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [expires, setExpires] = useState<string | undefined>();
+  const [expiresDate, setExpiresDate] = useState<string | undefined>();
   const [nameError, setNameError] = useState<string | undefined>();
   const [rolesError, setRolesError] = useState<string | undefined>();
+  const [serverError, setServerError] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
 
   function toggleRole(role: string) {
@@ -43,9 +48,10 @@ function useCreatePatForm(ctx: PatApiContext, onCreated: (pat: PatCreated) => vo
   function reset() {
     setName("");
     setSelectedRoles([]);
-    setExpires(undefined);
+    setExpiresDate(undefined);
     setNameError(undefined);
     setRolesError(undefined);
+    setServerError(undefined);
   }
 
   function submit() {
@@ -53,17 +59,20 @@ function useCreatePatForm(ctx: PatApiContext, onCreated: (pat: PatCreated) => vo
     const rolesErr = selectedRoles.length === 0 ? msg.rolesRequired : undefined;
     setNameError(nameErr);
     setRolesError(rolesErr);
+    setServerError(undefined);
     if (nameErr || rolesErr) return;
     setSubmitting(true);
+    const expires = expiresDate ? dateInputToIso(expiresDate) : undefined;
     createPat(ctx, { name, roles: selectedRoles, expires })
       .then((pat) => {
         onCreated(pat);
         reset();
       })
+      .catch((err: Error) => setServerError(err.message))
       .finally(() => setSubmitting(false));
   }
 
-  return { name, setName, selectedRoles, toggleRole, expires, setExpires, nameError, rolesError, submitting, submit };
+  return { name, setName, selectedRoles, toggleRole, expiresDate, setExpiresDate, nameError, rolesError, serverError, submitting, submit };
 }
 
 function RoleSelect({ roles, selected, onToggle }: {
@@ -128,10 +137,15 @@ export function PatCreateForm({ ctx, roles, onCreated }: Props) {
         <TextInput
           type="date"
           id="pat-expires"
-          value={form.expires ?? ""}
-          onChange={(_, v) => form.setExpires(v || undefined)}
+          value={form.expiresDate ?? ""}
+          onChange={(_, v) => form.setExpiresDate(v || undefined)}
         />
       </FormGroup>
+      {form.serverError && (
+        <HelperText>
+          <HelperTextItem variant="error" id="pat-server-error">{form.serverError}</HelperTextItem>
+        </HelperText>
+      )}
       <ActionGroup>
         <Button variant="primary" isLoading={form.submitting} onClick={form.submit}>
           {msg.createToken}

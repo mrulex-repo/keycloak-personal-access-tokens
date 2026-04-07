@@ -1,0 +1,41 @@
+# Traefik forwardAuth example for Keycloak Personal Access Tokens
+#
+# How it works:
+#   Traefik sends every request through the PAT /auth endpoint before forwarding
+#   to the upstream service. The Authorization header (Basic user:token) is
+#   forwarded to Keycloak. On success the identity headers are passed upstream.
+#   On 401/403/429 Traefik returns that status to the client.
+#
+# Cache recommendation:
+#   forwardAuth does not cache. Add a caching reverse proxy in front of the
+#   /auth endpoint, or use an external auth cache sidecar. Default TTL: 30 s.
+
+http:
+  middlewares:
+    pat-auth:
+      forwardAuth:
+        address: "http://keycloak:8080/realms/myrealm/personal-access-token/auth"
+        # Forward the client Authorization header to Keycloak
+        authRequestHeaders:
+          - "Authorization"
+          # Optional: pass a required role header from the client or a static value
+          # - "X-Required-Role"
+        # Copy identity headers from Keycloak response to upstream request
+        authResponseHeaders:
+          - "X-User"
+          - "X-User-Id"
+          - "X-Roles"
+        trustForwardHeader: false
+
+  routers:
+    my-service:
+      rule: "Host(`api.example.com`)"
+      middlewares:
+        - pat-auth
+      service: my-service
+
+  services:
+    my-service:
+      loadBalancer:
+        servers:
+          - url: "http://my-service:8080"
