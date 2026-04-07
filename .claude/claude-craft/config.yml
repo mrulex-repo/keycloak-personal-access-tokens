@@ -1,0 +1,3 @@
+verify:
+  commands:
+    - ./gradlew rewriteRun spotlessApply checkstyleMain checkstyleTest build jacocoTestCoverageVerification

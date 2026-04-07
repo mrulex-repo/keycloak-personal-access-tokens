@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-04-07T08:07:22.512Z",
+  "timestamp": "2026-04-07T08:17:32.440Z",
   "verified": true,
   "allPassed": false,
   "commands": [
     {
       "command": "./gradlew rewriteRun spotlessApply checkstyleMain checkstyleTest build jacocoTestCoverageVerification",
-      "exitCode": 1,
+      "exitCode": 127,
       "passed": false
     }
   ]
