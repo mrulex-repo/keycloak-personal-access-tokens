@@ -48,10 +48,18 @@ export async function createPat(
 }
 
 export async function deletePat(ctx: PatApiContext, id: string): Promise<void> {
-  await fetchJson<void>(ctx, patApiUrl(ctx), {
+  const response = await fetch(patApiUrl(ctx), {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${ctx.token}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ id }),
   });
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(body || `${response.status} ${response.statusText}`);
+  }
 }
 
 export async function listRoles(

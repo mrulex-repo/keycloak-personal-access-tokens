@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "cy:open": "cypress open",
-    "cy:run": "cypress run"
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "install-browsers": "playwright install chromium"
   },
   "devDependencies": {
-    "cypress": "^13.0.0"
+    "@playwright/test": "^1.51.0"
   }
 }

@@ -1,5 +1,8 @@
 # Gradle
 .gradle/
+extension/build/
+
+# Build output (assembled JARs)
 build/
 
 # IDE
@@ -15,6 +18,18 @@ Thumbs.db
 node_modules/
 dist/
 
+# Theme — keycloakify build output
+theme/dist_keycloak/
+
+# E2E — Playwright artifacts
+playwright-report/
+test-results/
+
 # Credentials / env
 .env
 *.env.local
+
+# Claude Code internal state
+.claude/changes_detected
+.claude/changes_pending
+.claude/commit_approved

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Suppressions for existing violations (pre-CLAUDE.md adoption).
+    Remove these as you refactor the code to comply with the rules.
+
+    TODO: Fix these files and remove suppressions:
+    - UserMapper.java: Methods exceed 35 lines
+    - OpulaMarketDataClient.java: Method exceeds 35 lines
+    - AlphaVantageClient.java: Method exceeds 35 lines
+-->
+<suppressions>
+    <!-- Existing method length violations - refactor and remove -->
+    <suppress files="UserMapper\.java" checks="MethodLength"/>
+    <suppress files="OpulaMarketDataClient\.java" checks="MethodLength"/>
+    <suppress files="AlphaVantageClient\.java" checks="MethodLength"/>
+
+    <!-- Repository interfaces - parameter count is dictated by JPA query methods -->
+    <suppress files=".*Repository\.java" checks="ParameterNumber"/>
+
+    <!-- Port interfaces - may need multiple params for domain operations -->
+    <suppress files=".*port[\\/]out[\\/].*\.java" checks="ParameterNumber"/>
+
+    <!-- Existing service violations - refactor to use records -->
+    <suppress files="InstrumentAnalysisService\.java" checks="ParameterNumber"/>
+    <suppress files="SubscriptionCommandService\.java" checks="ParameterNumber"/>
+    <suppress files="ChatService\.java" checks="ParameterNumber"/>
+    <suppress files="SubscriptionDeliveryJob\.java" checks="ParameterNumber"/>
+    <suppress files="OllamaClient\.java" checks="ParameterNumber"/>
+
+    <!-- Test files - existing violations -->
+    <suppress files=".*Test\.java" checks="MethodLength"/>
+    <suppress files=".*Test\.java" checks="ParameterNumber"/>
+
+    <!-- Test naming conventions:
+         - MethodName: underscore-separated test names (testX_condition) are a valid JUnit 5 convention
+         - ConstantName: Testcontainers @Container fields are static final but not true constants -->
+    <suppress files="[\\/]test[\\/]" checks="MethodName"/>
+    <suppress files="[\\/]test[\\/]" checks="ConstantName"/>
+</suppressions>

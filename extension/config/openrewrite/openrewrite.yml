@@ -1,0 +1,12 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.mrulex.StyleFixes
+displayName: Apply Google Java Style fixes
+description: >
+  Semantic code cleanup aligned with Google Java Style.
+  Formatting is delegated to Spotless/google-java-format.
+recipeList:
+  - org.openrewrite.java.ShortenFullyQualifiedTypeReferences
+  - org.openrewrite.java.UseStaticImport:
+      methodPattern: org.assertj..* *(..)
+  - org.openrewrite.java.RemoveUnusedImports

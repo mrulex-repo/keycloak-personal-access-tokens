@@ -9,6 +9,7 @@ import {
   Label,
   LabelGroup,
 } from "@patternfly/react-core";
+import { useState } from "react";
 import type { PatListItem } from "../types";
 import { msg } from "../i18n";
 
@@ -71,9 +72,9 @@ function RoleBadges({ roles }: { roles: string[] }) {
 }
 
 function ExpiryCell({ expires }: { expires: string | null }) {
-  if (!expires) return <span>{msg.noExpiry}</span>;
+  const [now] = useState(Date.now);
 
-  const now = Date.now();
+  if (!expires) return <span>{msg.noExpiry}</span>;
   const expiryTime = new Date(expires).getTime();
   const isExpired = expiryTime < now;
   const isExpiringSoon = !isExpired && expiryTime - now < 7 * 24 * 60 * 60 * 1000;

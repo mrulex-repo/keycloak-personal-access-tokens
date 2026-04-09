@@ -1,9 +1,10 @@
+import "@patternfly/patternfly/patternfly.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { KcAccountUI } from "./KcAccountUI";
+import { App } from "./App";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <KcAccountUI />
+    <App />
   </StrictMode>,
 );

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude Lombok-generated code (builders, getters, setters) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Exclude constructor throw warnings (common in Spring beans) -->
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- Exclude RuntimeException throws (used for business exceptions) -->
+    <Match>
+        <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION,THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
+    </Match>
+
+    <!-- Exclude Locale warnings for case conversion (English-only app) -->
+    <Match>
+        <Bug pattern="DM_CONVERT_CASE"/>
+    </Match>
+
+    <!-- Exclude broad exception catching (common in service layers) -->
+    <Match>
+        <Bug pattern="REC_CATCH_EXCEPTION"/>
+    </Match>
+
+    <!-- Exclude format string newline warnings -->
+    <Match>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+    </Match>
+
+    <!-- Exclude unread field warnings (often used by frameworks) -->
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD,URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+    </Match>
+
+    <!-- Exclude Spring configuration classes -->
+    <Match>
+        <Package name="~com\.opula\.bot\.infrastructure\.config.*"/>
+    </Match>
+
+    <!-- Exclude DTOs (records are immutable) -->
+    <Match>
+        <Package name="~com\.opula\.bot\.application\.dto.*"/>
+    </Match>
+
+    <!-- parseBasicCredentials/decodeBasic intentionally return null as a sentinel for
+         "no valid credentials" — checked explicitly by the caller -->
+    <Match>
+        <Class name="com.mrulex.keycloak.plugin.pat.PersonalAccessTokenResource"/>
+        <Bug pattern="PZLA_PREFER_ZERO_LENGTH_ARRAYS"/>
+    </Match>
+
+    <!-- Exclude test classes -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+    </Match>
+    <Match>
+        <Source name="~.*IT\.java"/>
+    </Match>
+</FindBugsFilter>

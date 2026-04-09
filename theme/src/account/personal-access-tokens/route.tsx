@@ -1,11 +1,7 @@
-import { lazy } from "react";
+import { lazy, createElement } from "react";
 import type { RouteObject } from "react-router-dom";
-
-const PersonalAccessTokens = lazy(
-  () => import("./PersonalAccessTokens"),
-);
 
 export const personalAccessTokensRoute: RouteObject = {
   path: "personal-access-tokens",
-  element: <PersonalAccessTokens />,
+  element: createElement(lazy(() => import("./PersonalAccessTokens"))),
 };

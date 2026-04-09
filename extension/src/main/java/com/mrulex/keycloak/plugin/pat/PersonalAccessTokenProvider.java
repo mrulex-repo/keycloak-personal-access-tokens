@@ -5,19 +5,19 @@ import org.keycloak.services.resource.RealmResourceProvider;
 
 public class PersonalAccessTokenProvider implements RealmResourceProvider {
 
-    private final KeycloakSession session;
+  private final KeycloakSession session;
 
-    public PersonalAccessTokenProvider(KeycloakSession session) {
-        this.session = session;
-    }
+  public PersonalAccessTokenProvider(KeycloakSession session) {
+    this.session = session;
+  }
 
-    @Override
-    public Object getResource() {
-        return new PersonalAccessTokenResource(session);
-    }
+  @Override
+  public Object getResource() {
+    return new PersonalAccessTokenResource(session);
+  }
 
-    @Override
-    public void close() {
-        // nothing to close
-    }
+  @Override
+  public void close() {
+    // nothing to close
+  }
 }

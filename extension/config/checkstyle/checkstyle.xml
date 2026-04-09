@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    Checkstyle: Google Java Style + CLAUDE.md structural rules.
+    Formatting (indentation, braces, line length) is owned by Spotless/google-java-format.
+    This file enforces naming conventions, imports, and structural limits only.
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="(.*[\\/]build[\\/].*$)|(module\-info\.java$)"/>
+    </module>
+
+    <module name="TreeWalker">
+
+        <!-- ===== NAMING (Google Java Style §5) ===== -->
+
+        <module name="TypeName">
+            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, RECORD_DEF"/>
+        </module>
+
+        <module name="MethodName"/>
+
+        <module name="ParameterName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <module name="ConstantName"/>
+
+        <module name="StaticVariableName"/>
+
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- ===== IMPORTS (Google Java Style §3.3) ===== -->
+
+        <module name="AvoidStarImport"/>
+
+        <module name="UnusedImports">
+            <property name="processJavadoc" value="true"/>
+        </module>
+
+        <!-- ===== ANNOTATIONS ===== -->
+
+        <!-- @Override must be used whenever @inheritDoc would apply -->
+        <module name="MissingOverride"/>
+
+        <!-- ===== DESIGN ===== -->
+
+        <!-- No finalizers (Google Java Style §6.4) -->
+        <module name="NoFinalizer"/>
+
+        <!-- ===== CLAUDE.MD STRUCTURAL RULES ===== -->
+
+        <!-- Rule #3: Methods ≤ 35 lines -->
+        <module name="MethodLength">
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF"/>
+            <property name="max" value="35"/>
+            <property name="countEmpty" value="false"/>
+        </module>
+
+        <!-- Rule #4: Max 3 parameters per method -->
+        <module name="ParameterNumber">
+            <property name="max" value="3"/>
+            <property name="ignoreOverriddenMethods" value="true"/>
+            <property name="tokens" value="METHOD_DEF"/>
+        </module>
+
+        <!-- Constructors may have more params (Lombok @AllArgsConstructor) -->
+        <module name="ParameterNumber">
+            <property name="max" value="10"/>
+            <property name="tokens" value="CTOR_DEF"/>
+        </module>
+
+        <!-- Rule #5: Max 2 levels of nesting -->
+        <module name="NestedIfDepth">
+            <property name="max" value="2"/>
+        </module>
+
+        <module name="NestedForDepth">
+            <property name="max" value="2"/>
+        </module>
+
+        <module name="NestedTryDepth">
+            <property name="max" value="2"/>
+        </module>
+
+        <!-- Allow inline suppression -->
+        <module name="SuppressionCommentFilter">
+            <property name="offCommentFormat" value="CHECKSTYLE:OFF"/>
+            <property name="onCommentFormat" value="CHECKSTYLE:ON"/>
+        </module>
+
+    </module>
+
+    <!-- Suppression file for known violations -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/suppressions.xml"/>
+        <property name="optional" value="true"/>
+    </module>
+
+</module>
