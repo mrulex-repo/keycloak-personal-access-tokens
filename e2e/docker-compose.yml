@@ -8,7 +8,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     volumes:
-      - ../build/keycloak-personal-access-tokens-1.0.0.jar:/opt/keycloak/providers/keycloak-personal-access-tokens.jar:ro
+      - ../build/keycloak-personal-access-tokens.jar:/opt/keycloak/providers/keycloak-personal-access-tokens.jar:ro
       - ../build/keycloak-personal-access-tokens-theme.jar:/opt/keycloak/providers/keycloak-personal-access-tokens-theme.jar:ro
       - ./realm/test-realm.json:/opt/keycloak/data/import/test-realm.json:ro
     command: start-dev --import-realm

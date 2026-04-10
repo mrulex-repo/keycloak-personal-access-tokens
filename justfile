@@ -22,30 +22,22 @@ package: package-extension package-theme
 package-extension:
     #!/usr/bin/env bash
     set -euo pipefail
-    VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
-    if [[ -z "$VERSION" ]]; then
-        echo "No release tag found. Run 'just release' first."
-        exit 1
-    fi
     cd extension && ./gradlew shadowJar
     mkdir -p ../build
-    cp "build/libs/keycloak-personal-access-tokens-${VERSION}.jar" \
-       "../build/keycloak-personal-access-tokens-${VERSION}.jar"
-    echo "Extension JAR: build/keycloak-personal-access-tokens-${VERSION}.jar"
+    rm -rf "../build/keycloak-personal-access-tokens.jar"
+    cp "build/libs/keycloak-personal-access-tokens.jar" \
+       "../build/keycloak-personal-access-tokens.jar"
+    echo "Extension JAR: build/keycloak-personal-access-tokens.jar"
 
 # Copy the theme JAR to build/
 package-theme:
     #!/usr/bin/env bash
     set -euo pipefail
-    VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
-    if [[ -z "$VERSION" ]]; then
-        echo "No release tag found. Run 'just release' first."
-        exit 1
-    fi
     mkdir -p build
+    rm -rf "build/keycloak-personal-access-tokens-theme.jar"
     cp theme/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar \
-       "build/keycloak-personal-access-tokens-theme-${VERSION}.jar"
-    echo "Theme JAR: build/keycloak-personal-access-tokens-theme-${VERSION}.jar"
+       "build/keycloak-personal-access-tokens-theme.jar"
+    echo "Theme JAR: build/keycloak-personal-access-tokens-theme.jar"
 
 # Clean all build and package outputs
 clean: clean-extension clean-theme
@@ -71,8 +63,8 @@ e2e-run:
     trap 'just e2e-down' EXIT
     cd e2e && pnpm test
 
-# Run the full E2E suite: build → start container → run Playwright → stop container
-e2e: build e2e-run
+# Run the full E2E suite: build → package → start container → run Playwright → stop container
+e2e: build package e2e-run
 
 # Stop the E2E Keycloak container
 e2e-down:
@@ -82,12 +74,13 @@ e2e-down:
 e2e-install:
     cd e2e && pnpm install && pnpm run install-browsers
 
-# Start the E2E Keycloak container (requires `just build` to have run first)
+# Start the E2E Keycloak container (requires `just build` and `just package` to have run first)
 e2e-up:
     #!/usr/bin/env bash
     set -euo pipefail
     cd e2e
-    docker compose up -d
+    docker compose down --remove-orphans
+    docker compose up -d --force-recreate
     echo "Waiting for Keycloak E2E container to be ready..."
     for i in $(seq 1 90); do
       if ! docker compose ps keycloak | grep -q "Up\|running"; then
@@ -168,15 +161,6 @@ release:
     NEXT="${MAJOR}.${MINOR}.${PATCH}"
     echo "Bump: $LAST_TAG → v${NEXT}  (${BUMP})"
 
-    # Update extension/build.gradle.kts
-    sed -i "s/^version = \"[^\"]*\"/version = \"${NEXT}\"/" extension/build.gradle.kts
-
-    # Update theme/package.json  (match the "version": "..." line)
-    sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${NEXT}\"/" theme/package.json
-
-    # Commit version files and tag
-    git add extension/build.gradle.kts theme/package.json
-    git commit -m "chore: release v${NEXT}"
     git tag "v${NEXT}"
 
     echo "Released v${NEXT} — push the tag with: git push origin v${NEXT}"
@@ -197,8 +181,8 @@ publish:
     fi
     VERSION=${TAG#v}
 
-    EXT_JAR="build/keycloak-personal-access-tokens-${VERSION}.jar"
-    THEME_JAR="build/keycloak-personal-access-tokens-theme-${VERSION}.jar"
+    EXT_JAR="build/keycloak-personal-access-tokens.jar"
+    THEME_JAR="build/keycloak-personal-access-tokens-theme.jar"
 
     [[ -f "$EXT_JAR" ]]   || { echo "Missing $EXT_JAR — run 'just package' first."; exit 1; }
     [[ -f "$THEME_JAR" ]] || { echo "Missing $THEME_JAR — run 'just package' first."; exit 1; }
@@ -225,12 +209,11 @@ publish:
         exit 1
     fi
 
-    # 2. Upload artifacts
+    # 2. Upload artifacts with versioned names
     _upload() {
-        local file="$1" name
-        name=$(basename "$file")
-        echo "  Uploading ${name}..."
-        curl -fsSL -X POST "${UPLOAD_URL}?name=${name}" \
+        local file="$1" asset_name="$2"
+        echo "  Uploading ${asset_name}..."
+        curl -fsSL -X POST "${UPLOAD_URL}?name=${asset_name}" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -238,8 +221,8 @@ publish:
             --data-binary "@${file}" > /dev/null
     }
 
-    _upload "$EXT_JAR"
-    _upload "$THEME_JAR"
+    _upload "$EXT_JAR"   "keycloak-personal-access-tokens-${VERSION}.jar"
+    _upload "$THEME_JAR" "keycloak-personal-access-tokens-theme-${VERSION}.jar"
 
     echo "Done: ${RELEASE_URL}"
 
@@ -259,6 +242,9 @@ ci-verify:
     just build
     t_build=$(date +%s)
 
+    just package
+    t_package=$(date +%s)
+
     just e2e-run
     t_e2e=$(date +%s)
 
@@ -267,7 +253,8 @@ ci-verify:
     echo "  ci-verify complete"
     echo "══════════════════════════════════════════════════════"
     printf "  %-12s %d s\n" "build"   "$((t_build - t0))"
-    printf "  %-12s %d s\n" "e2e"     "$((t_e2e  - t_build))"
+    printf "  %-12s %d s\n" "package" "$((t_package - t_build))"
+    printf "  %-12s %d s\n" "e2e"     "$((t_e2e  - t_package))"
     printf "  %-12s %d s\n" "total"   "$((t_e2e  - t0))"
     echo ""
     echo "  Reports"

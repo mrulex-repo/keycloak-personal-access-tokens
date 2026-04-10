@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.mrulex.keycloak.plugin"
-version = "0.1.0"
+version = "see-git-tag"
 
 java {
     toolchain {
@@ -83,6 +83,7 @@ tasks.named<Test>("test") {
 
 tasks.shadowJar {
     archiveClassifier.set("")
+    archiveVersion.set("")
     mergeServiceFiles()
     append("META-INF/LICENSE.txt")
     append("META-INF/NOTICE.txt")

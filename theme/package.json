@@ -1,6 +1,6 @@
 {
   "name": "@mrulex/keycloak-plugin-pat-theme",
-  "version": "0.1.0",
+  "version": "see-git-tag",
   "private": true,
   "type": "module",
   "scripts": {
