@@ -22,19 +22,30 @@ package: package-extension package-theme
 package-extension:
     #!/usr/bin/env bash
     set -euo pipefail
+    VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
+    if [[ -z "$VERSION" ]]; then
+        echo "No release tag found. Run 'just release' first."
+        exit 1
+    fi
     cd extension && ./gradlew shadowJar
-    mkdir -p build
-    cp extension/build/libs/keycloak-personal-access-tokens-1.0.0.jar build/
-    echo "Extension JAR: build/keycloak-personal-access-tokens-1.0.0.jar"
+    mkdir -p ../build
+    cp "build/libs/keycloak-personal-access-tokens-${VERSION}.jar" \
+       "../build/keycloak-personal-access-tokens-${VERSION}.jar"
+    echo "Extension JAR: build/keycloak-personal-access-tokens-${VERSION}.jar"
 
 # Copy the theme JAR to build/
 package-theme:
     #!/usr/bin/env bash
     set -euo pipefail
+    VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
+    if [[ -z "$VERSION" ]]; then
+        echo "No release tag found. Run 'just release' first."
+        exit 1
+    fi
     mkdir -p build
     cp theme/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar \
-       build/keycloak-personal-access-tokens-theme.jar
-    echo "Theme JAR: build/keycloak-personal-access-tokens-theme.jar"
+       "build/keycloak-personal-access-tokens-theme-${VERSION}.jar"
+    echo "Theme JAR: build/keycloak-personal-access-tokens-theme-${VERSION}.jar"
 
 # Clean all build and package outputs
 clean: clean-extension clean-theme
@@ -99,6 +110,138 @@ e2e-up:
     echo "Timed out after 180s. Container logs:"
     docker compose logs keycloak | tail -50
     exit 1
+
+# ---------------------------------------------------------------------------
+# Release
+# ---------------------------------------------------------------------------
+
+# Analyse commits since the last release tag, bump the semver version in both
+# extension/build.gradle.kts and theme/package.json, commit, and create a git tag.
+# Bump rules (highest wins): breaking/type! → major | feat/feature → minor | else → patch
+release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    LAST_TAG=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1)
+
+    if [[ -z "$LAST_TAG" ]]; then
+        echo "No release tag found — treating as v0.0.0"
+        LAST_TAG="v0.0.0"
+        COMMITS=$(git log --pretty=format:"%s")
+    else
+        echo "Last release tag: $LAST_TAG"
+        COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s")
+    fi
+
+    if [[ -z "$COMMITS" ]]; then
+        echo "No commits since $LAST_TAG — nothing to release."
+        exit 0
+    fi
+
+    # Parse current semver
+    VERSION=${LAST_TAG#v}
+    MAJOR=$(echo "$VERSION" | cut -d. -f1)
+    MINOR=$(echo "$VERSION" | cut -d. -f2)
+    PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+    # Walk commits and determine the required bump level
+    BUMP="patch"
+    while IFS= read -r msg; do
+        # Breaking: any conventional-commit type with ! (e.g. feat!:, fix!:)
+        # or explicit break/breaking prefix
+        if echo "$msg" | grep -qE '^[a-z]+(\([^)]+\))?!:'; then
+            BUMP="major"; break
+        elif echo "$msg" | grep -qiE '^(break|breaking)(\([^)]+\))?:'; then
+            BUMP="major"; break
+        elif echo "$msg" | grep -qiE '^(feat|feature)(\([^)]+\))?:'; then
+            [[ "$BUMP" != "major" ]] && BUMP="minor"
+        fi
+    done <<< "$COMMITS"
+
+    # Compute next version
+    case "$BUMP" in
+        major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+        minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+        patch) PATCH=$((PATCH + 1)) ;;
+    esac
+
+    NEXT="${MAJOR}.${MINOR}.${PATCH}"
+    echo "Bump: $LAST_TAG → v${NEXT}  (${BUMP})"
+
+    # Update extension/build.gradle.kts
+    sed -i "s/^version = \"[^\"]*\"/version = \"${NEXT}\"/" extension/build.gradle.kts
+
+    # Update theme/package.json  (match the "version": "..." line)
+    sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${NEXT}\"/" theme/package.json
+
+    # Commit version files and tag
+    git add extension/build.gradle.kts theme/package.json
+    git commit -m "chore: release v${NEXT}"
+    git tag "v${NEXT}"
+
+    echo "Released v${NEXT} — push the tag with: git push origin v${NEXT}"
+
+# Publish build artifacts for the current git tag to GitHub Releases.
+# Requires GITHUB_TOKEN env var. Reads GITHUB_REPO (owner/repo) from the git
+# remote origin, or override by setting the env var explicitly.
+publish:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    : "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
+
+    TAG=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1)
+    if [[ -z "$TAG" ]]; then
+        echo "No release tag found. Run 'just release' first."
+        exit 1
+    fi
+    VERSION=${TAG#v}
+
+    EXT_JAR="build/keycloak-personal-access-tokens-${VERSION}.jar"
+    THEME_JAR="build/keycloak-personal-access-tokens-theme-${VERSION}.jar"
+
+    [[ -f "$EXT_JAR" ]]   || { echo "Missing $EXT_JAR — run 'just package' first."; exit 1; }
+    [[ -f "$THEME_JAR" ]] || { echo "Missing $THEME_JAR — run 'just package' first."; exit 1; }
+
+    # Derive owner/repo from remote origin, allow env override
+    REPO="${GITHUB_REPO:-$(git remote get-url origin | sed -E 's#.*github\.com[/:](.+/.+)\.git#\1#; s#.*github\.com[/:](.+/.+)#\1#')}"
+    API="https://api.github.com/repos/${REPO}"
+
+    echo "Publishing ${TAG} to ${REPO}..."
+
+    # 1. Create the release and capture the upload URL
+    RELEASE_JSON=$(curl -fsSL -X POST "${API}/releases" \
+        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        -d "{\"tag_name\":\"${TAG}\",\"name\":\"Release ${TAG}\",\"generate_release_notes\":true}")
+
+    UPLOAD_URL=$(echo "$RELEASE_JSON" | grep -o '"upload_url":"[^"]*"' | cut -d'"' -f4 | sed 's/{?name,label}//')
+    RELEASE_URL=$(echo "$RELEASE_JSON" | grep -o '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+    if [[ -z "$UPLOAD_URL" ]]; then
+        echo "Failed to create release. Response:"
+        echo "$RELEASE_JSON"
+        exit 1
+    fi
+
+    # 2. Upload artifacts
+    _upload() {
+        local file="$1" name
+        name=$(basename "$file")
+        echo "  Uploading ${name}..."
+        curl -fsSL -X POST "${UPLOAD_URL}?name=${name}" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/java-archive" \
+            --data-binary "@${file}" > /dev/null
+    }
+
+    _upload "$EXT_JAR"
+    _upload "$THEME_JAR"
+
+    echo "Done: ${RELEASE_URL}"
 
 # ---------------------------------------------------------------------------
 # CI

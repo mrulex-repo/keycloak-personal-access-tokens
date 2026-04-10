@@ -84,6 +84,8 @@ tasks.named<Test>("test") {
 tasks.shadowJar {
     archiveClassifier.set("")
     mergeServiceFiles()
+    append("META-INF/LICENSE.txt")
+    append("META-INF/NOTICE.txt")
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {
