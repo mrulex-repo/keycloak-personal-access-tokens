@@ -59,34 +59,20 @@ export async function deleteAllPatsViaApi(request: APIRequestContext): Promise<v
 }
 
 /**
- * Navigates to the PAT page and performs the Keycloak login flow if needed.
+ * Navigates to the PAT page. Tests call this in beforeEach.
  *
- * page.goto() resolves on the HTML load event, before the React SPA runs.
- * keycloak.init() inside KeycloakProvider then JS-redirects to the Keycloak login page.
- * URL-based detection is unreliable: the initial URL already contains "/personal-access-tokens"
- * so waitForURL would resolve immediately before the redirect happens.
+ * Authentication is pre-loaded via Playwright's storageState (global-setup.ts
+ * authenticates once before any worker starts and persists the session cookies).
+ * page.goto() therefore lands directly on the authenticated PAT page — no login
+ * redirect or credentials needed here.
  *
- * Instead, we wait for visible DOM elements — either the login username field (redirect
- * happened) or the PAT name input (already authenticated, app loaded). This is robust
- * regardless of redirect timing.
+ * networkidle wait: PatternFly Brand uses width/height:auto so the masthead <img>
+ * has a zero bounding box while the image file is loading. toBeVisible() would
+ * fail on a cold run if we return as soon as #pat-name appears. networkidle fires
+ * once all pending requests (logo, listPats API, listRoles API) have settled.
  */
 export async function loginAndNavigateToPats(page: Page): Promise<void> {
   await page.goto(`${KC_URL}/realms/${REALM}/account/personal-access-tokens`);
-
-  const patName = page.locator("#pat-name");
-  const username = page.locator("#username");
-
-  // Wait for whichever appears first: login form or authenticated PAT form.
-  await Promise.race([
-    patName.waitFor({ state: "visible", timeout: 30000 }),
-    username.waitFor({ state: "visible", timeout: 30000 }),
-  ]);
-
-  if (await username.isVisible()) {
-    await username.fill(USERNAME);
-    await page.locator("#password").fill(PASSWORD);
-    await page.locator("[type=submit]").click();
-    // Wait for the PAT form — confirms the full OIDC exchange succeeded.
-    await patName.waitFor({ state: "visible", timeout: 30000 });
-  }
+  await page.locator("#pat-name").waitFor({ state: "visible", timeout: 30000 });
+  await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
 }

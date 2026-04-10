@@ -1,3 +1,4 @@
 verify:
   commands:
     - just ci-verify
+  timeout: PT7M

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PageSection, Spinner, Text, TextContent, Title } from "@patternfly/react-core";
 import { listPats, listRoles, deletePat } from "./pat-client";
+import type { PatApiContext } from "./pat-client";
 import type { PatListItem, PatCreated, PatRole } from "./types";
 import { usePatApiContext } from "./usePatApiContext";
 import { PatList } from "./components/PatList";
@@ -39,8 +40,25 @@ function toListItem(pat: PatCreated): PatListItem {
   return { id: pat.id, name: pat.name, created: pat.created, expires: pat.expires, roles: pat.roles };
 }
 
-export default function PersonalAccessTokens() {
-  const { ctx, pats, roles, loading, error, setPats } = usePatData();
+function PatPageHeader() {
+  return (
+    <PageSection variant="light">
+      <TextContent>
+        <Title headingLevel="h1" data-testid="page-heading">{msg.pageTitle}</Title>
+        <Text component="p">{msg.pageDescription}</Text>
+      </TextContent>
+    </PageSection>
+  );
+}
+
+type PatPageLoadedProps = {
+  ctx: PatApiContext;
+  pats: PatListItem[];
+  roles: PatRole[];
+  setPats: (updater: (prev: PatListItem[]) => PatListItem[]) => void;
+};
+
+function PatPageLoaded({ ctx, pats, roles, setPats }: PatPageLoadedProps) {
   const [createdPat, setCreatedPat] = useState<PatCreated | null>(null);
   const [deletingPat, setDeletingPat] = useState<PatListItem | null>(null);
 
@@ -54,17 +72,9 @@ export default function PersonalAccessTokens() {
     setDeletingPat(null);
   }
 
-  if (loading) return <Spinner />;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
-
   return (
     <>
-      <PageSection variant="light">
-        <TextContent>
-          <Title headingLevel="h1" data-testid="page-heading">{msg.pageTitle}</Title>
-          <Text component="p">{msg.pageDescription}</Text>
-        </TextContent>
-      </PageSection>
+      <PatPageHeader />
       <PageSection variant="light">
         {createdPat && (
           <NewTokenAlert pat={createdPat} onDone={() => setCreatedPat(null)} />
@@ -74,15 +84,18 @@ export default function PersonalAccessTokens() {
         {deletingPat && (
           <DeleteConfirmModal
             name={deletingPat.name}
-            onConfirm={() =>
-              deletePat(ctx, deletingPat.id).then(() =>
-                handleDeleted(deletingPat.id),
-              )
-            }
+            onConfirm={() => deletePat(ctx, deletingPat.id).then(() => handleDeleted(deletingPat.id))}
             onCancel={() => setDeletingPat(null)}
           />
         )}
       </PageSection>
     </>
   );
+}
+
+export default function PersonalAccessTokens() {
+  const { ctx, pats, roles, loading, error, setPats } = usePatData();
+  if (loading) return <Spinner />;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  return <PatPageLoaded ctx={ctx} pats={pats} roles={roles} setPats={setPats} />;
 }

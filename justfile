@@ -52,13 +52,16 @@ clean-theme:
 # E2E tests (Playwright + Docker)
 # ---------------------------------------------------------------------------
 
-# Run the full E2E suite: build → start container → run Playwright → stop container
-e2e: build
+# Start container, run Playwright, stop container (build must have run first)
+e2e-run:
     #!/usr/bin/env bash
     set -euo pipefail
     just e2e-up
     trap 'just e2e-down' EXIT
     cd e2e && pnpm test
+
+# Run the full E2E suite: build → start container → run Playwright → stop container
+e2e: build e2e-run
 
 # Stop the E2E Keycloak container
 e2e-down:
@@ -83,6 +86,11 @@ e2e-up:
       fi
       if curl -sf http://localhost:18080/realms/test > /dev/null 2>&1; then
         echo "Keycloak is ready at http://localhost:18080"
+        # Warm up theme templates before tests start. The realm endpoint responds while
+        # Keycloak is still compiling Freemarker templates on first access. Following the
+        # account → login redirect forces template compilation so the first browser login
+        # does not hit cold-start latency (which can exceed the 30 s waitFor timeout).
+        curl -sfL "http://localhost:18080/realms/test/account/" -o /dev/null 2>&1 || true
         exit 0
       fi
       printf "  [%ds] waiting...\r" "$((i * 2))"
@@ -99,5 +107,33 @@ e2e-up:
 # Run full verification (build + e2e) then package artifacts
 ci: ci-verify package
 
-# Run full build and e2e verification
-ci-verify: build e2e
+# Run full build and e2e verification, then print a timing + artifact summary
+ci-verify:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    t0=$(date +%s)
+
+    just build
+    t_build=$(date +%s)
+
+    just e2e-run
+    t_e2e=$(date +%s)
+
+    echo ""
+    echo "══════════════════════════════════════════════════════"
+    echo "  ci-verify complete"
+    echo "══════════════════════════════════════════════════════"
+    printf "  %-12s %d s\n" "build"   "$((t_build - t0))"
+    printf "  %-12s %d s\n" "e2e"     "$((t_e2e  - t_build))"
+    printf "  %-12s %d s\n" "total"   "$((t_e2e  - t0))"
+    echo ""
+    echo "  Reports"
+    echo "  ├─ extension/build/reports/tests/test/index.html"
+    echo "  ├─ extension/build/reports/checkstyle/"
+    echo "  ├─ extension/build/reports/spotbugs/"
+    echo "  ├─ extension/build/reports/jacoco/test/html/index.html"
+    echo "  └─ e2e/playwright-report/index.html"
+    echo ""
+    echo "  Artifacts"
+    echo "  └─ theme/dist_keycloak/"
+    echo "══════════════════════════════════════════════════════"
