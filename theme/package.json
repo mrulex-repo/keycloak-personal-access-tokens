@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@keycloak/keycloak-account-ui": "^26.0.0",
+    "@keycloak/keycloak-ui-shared": "^26.0.0",
     "@keycloakify/keycloak-account-ui": "~260502.0.0",
     "@keycloakify/keycloak-ui-shared": "~260502.0.0",
     "@patternfly/patternfly": "^5.4.2",

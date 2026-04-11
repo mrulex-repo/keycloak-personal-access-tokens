@@ -67,7 +67,7 @@ class PatBasicAuthAuthenticatorTest {
     mapper = new ObjectMapper();
     http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 
-    File shadowJar = new File("build/libs/keycloak-personal-access-tokens-1.0.0.jar");
+    File shadowJar = new File("build/libs/keycloak-personal-access-tokens.jar");
     assertThat(shadowJar).exists();
 
     KeycloakContainer container =

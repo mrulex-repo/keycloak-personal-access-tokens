@@ -11,6 +11,9 @@ importers:
       '@keycloak/keycloak-account-ui':
         specifier: ^26.0.0
         version: 26.5.7(typescript@5.9.3)
+      '@keycloak/keycloak-ui-shared':
+        specifier: ^26.0.0
+        version: 26.5.7(typescript@5.9.3)
       '@keycloakify/keycloak-account-ui':
         specifier: ~260502.0.0
         version: 260502.0.2(a3124bf313ce956b4d447baae347208c)

@@ -67,6 +67,7 @@ jacoco {
 }
 
 tasks.named<Test>("test") {
+    dependsOn(tasks.shadowJar)
     useJUnitPlatform()
     doFirst {
         // configurations.jacocoAgent is a wrapper JAR; the real agent is jacocoagent.jar inside it.
