@@ -22,7 +22,15 @@ package: package-extension package-theme
 package-extension:
     #!/usr/bin/env bash
     set -euo pipefail
-    cd extension && ./gradlew shadowJar
+    VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
+    if [[ -z "$VERSION" ]]; then
+        echo "No release tag found — building extension without version."
+        VERSION_ARG=""
+    else
+        echo "Baking version ${VERSION} into extension JAR..."
+        VERSION_ARG="-Pversion=${VERSION}"
+    fi
+    cd extension && ./gradlew shadowJar $VERSION_ARG
     mkdir -p ../build
     rm -rf "../build/keycloak-personal-access-tokens.jar"
     cp "build/libs/keycloak-personal-access-tokens.jar" \
@@ -33,6 +41,15 @@ package-extension:
 package-theme:
     #!/usr/bin/env bash
     set -euo pipefail
+    VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
+    if [[ -z "$VERSION" ]]; then
+        echo "No release tag found — building theme without version."
+    else
+        echo "Baking version ${VERSION} into theme JAR..."
+        ORIG=$(cat theme/package.json)
+        trap 'printf "%s" "$ORIG" > theme/package.json' EXIT
+        cd theme && pnpm pkg set version="${VERSION}" && pnpm run build-keycloak-theme
+    fi
     mkdir -p build
     rm -rf "build/keycloak-personal-access-tokens-theme.jar"
     cp theme/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar \
@@ -108,8 +125,8 @@ e2e-up:
 # Release
 # ---------------------------------------------------------------------------
 
-# Analyse commits since the last release tag, bump the semver version in both
-# extension/build.gradle.kts and theme/package.json, commit, and create a git tag.
+# Analyse commits since the last release tag, compute the next semver, create a local git
+# tag, and push it to origin. Idempotent: skips steps already done.
 # Bump rules (highest wins): breaking/type! → major | feat/feature → minor | else → patch
 release:
     #!/usr/bin/env bash
@@ -161,9 +178,19 @@ release:
     NEXT="${MAJOR}.${MINOR}.${PATCH}"
     echo "Bump: $LAST_TAG → v${NEXT}  (${BUMP})"
 
-    git tag "v${NEXT}"
+    if git tag --list "v${NEXT}" | grep -q "v${NEXT}"; then
+        echo "Release tag v${NEXT} already exists locally."
+    else
+        git tag "v${NEXT}"
+        echo "Created tag v${NEXT}."
+    fi
 
-    echo "Released v${NEXT} — push the tag with: git push origin v${NEXT}"
+    if git ls-remote --tags origin "refs/tags/v${NEXT}" | grep -q "v${NEXT}"; then
+        echo "Tag v${NEXT} already pushed to origin — nothing to do."
+    else
+        git push origin "v${NEXT}"
+        echo "Pushed v${NEXT} to origin."
+    fi
 
 # Publish build artifacts for the current git tag to GitHub Releases.
 # Requires GITHUB_TOKEN env var. Reads GITHUB_REPO (owner/repo) from the git
@@ -193,7 +220,18 @@ publish:
 
     echo "Publishing ${TAG} to ${REPO}..."
 
-    # 1. Create the release and capture the upload URL
+    # 1. Check whether a GitHub release for this tag already exists
+    EXISTING=$(curl -sS -o /dev/null -w "%{http_code}" \
+        -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "${API}/releases/tags/${TAG}")
+    if [[ "$EXISTING" == "200" ]]; then
+        echo "GitHub release ${TAG} already published — nothing to do."
+        exit 0
+    fi
+
+    # 2. Create the release and capture the upload URL
     RELEASE_JSON=$(curl -fsSL -X POST "${API}/releases" \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         -H "Accept: application/vnd.github+json" \
@@ -209,7 +247,7 @@ publish:
         exit 1
     fi
 
-    # 2. Upload artifacts with versioned names
+    # 3. Upload artifacts with versioned names
     _upload() {
         local file="$1" asset_name="$2"
         echo "  Uploading ${asset_name}..."
