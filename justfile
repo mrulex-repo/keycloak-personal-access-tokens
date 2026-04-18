@@ -13,8 +13,8 @@ build-extension:
 
 # Build the Account UI theme: lint, test, compile, and keycloakify build
 build-theme:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
     cd theme
     pnpm install --frozen-lockfile
     # Expose mvnw as `mvn` so keycloakify (which hardcodes the name) can find it
