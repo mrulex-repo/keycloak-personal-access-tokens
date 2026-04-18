@@ -17,12 +17,8 @@ build-theme:
     set -eu
     cd theme
     pnpm install --frozen-lockfile
-    # Expose mvnw as `mvn` so keycloakify (which hardcodes the name) can find it
-    SHIM_DIR="$(pwd)/.mvn-shim"
-    mkdir -p "$SHIM_DIR"
-    printf '#!/bin/sh\nexec "%s/mvnw" "$@"\n' "$(pwd)" > "$SHIM_DIR/mvn"
-    chmod +x "$SHIM_DIR/mvn"
-    export PATH="$SHIM_DIR:$PATH"
+    # theme/mvn delegates to mvnw; add the theme dir to PATH so keycloakify finds it
+    export PATH="$(pwd):$PATH"
     pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
 
 # Create deployable artifacts for extension and theme
