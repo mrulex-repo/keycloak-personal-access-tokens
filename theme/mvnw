@@ -1,42 +1,31 @@
 #!/bin/sh
-# Maven Wrapper — downloads Maven on first run, then delegates to it.
+# Maven Wrapper — delegates to the committed maven-wrapper.jar.
+# Downloads Maven on first run; no system Maven required.
 set -e
 
-SCRIPT_DIR=$(dirname "$0")
-WRAPPER_PROPERTIES="$SCRIPT_DIR/.mvn/wrapper/maven-wrapper.properties"
-
-if [ ! -f "$WRAPPER_PROPERTIES" ]; then
-  echo "ERROR: .mvn/wrapper/maven-wrapper.properties not found." >&2
-  exit 1
-fi
-
-DISTRIBUTION_URL=$(sed -n 's/^distributionUrl=//p' "$WRAPPER_PROPERTIES" | tr -d '\r')
-
-if [ -z "$DISTRIBUTION_URL" ]; then
-  echo "ERROR: distributionUrl not set in maven-wrapper.properties." >&2
-  exit 1
-fi
-
-MVN_VERSION=$(echo "$DISTRIBUTION_URL" | sed 's/.*apache-maven-\([0-9.]*\)-bin\.tar\.gz/\1/')
-CACHE_DIR="${HOME}/.m2/wrapper/dists/apache-maven-${MVN_VERSION}"
-MVN_BIN="${CACHE_DIR}/bin/mvn"
-
-if [ ! -f "$MVN_BIN" ]; then
-  echo "Downloading Apache Maven ${MVN_VERSION}..."
-  mkdir -p "$CACHE_DIR"
-  TMP="${CACHE_DIR}/maven.tar.gz"
-  if command -v curl > /dev/null 2>&1; then
-    curl -fsSL "$DISTRIBUTION_URL" -o "$TMP"
-  elif command -v wget > /dev/null 2>&1; then
-    wget -q "$DISTRIBUTION_URL" -O "$TMP"
+# Resolve the script's own directory regardless of how it was invoked.
+# This mirrors the approach used by the Gradle wrapper.
+SCRIPT="$0"
+while [ -h "$SCRIPT" ]; do
+  ls_out=$(ls -ld "$SCRIPT")
+  link=$(expr "$ls_out" : '.*-> \(.*\)$')
+  if expr "$link" : '/.*' > /dev/null; then
+    SCRIPT="$link"
   else
-    echo "ERROR: curl or wget is required." >&2
-    exit 1
+    SCRIPT=$(dirname "$SCRIPT")/"$link"
   fi
-  tar -xz -f "$TMP" -C "$CACHE_DIR" --strip-components=1
-  rm -f "$TMP"
-  chmod +x "$MVN_BIN"
-  echo "Maven ${MVN_VERSION} ready."
+done
+MAVEN_PROJECTBASEDIR=$(dirname "$SCRIPT")
+MAVEN_PROJECTBASEDIR=$(cd "$MAVEN_PROJECTBASEDIR" && pwd)
+
+WRAPPER_JAR="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar"
+
+if [ ! -f "$WRAPPER_JAR" ]; then
+  echo "ERROR: $WRAPPER_JAR not found." >&2
+  exit 1
 fi
 
-exec "$MVN_BIN" "$@"
+exec java \
+  -classpath "$WRAPPER_JAR" \
+  "-Dmaven.multiModuleProjectDirectory=$MAVEN_PROJECTBASEDIR" \
+  org.apache.maven.wrapper.MavenWrapperMain "$@"
