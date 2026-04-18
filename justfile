@@ -13,7 +13,7 @@ build-extension:
 
 # Build the Account UI theme: lint, test, compile, and keycloakify build
 build-theme:
-    cd theme && pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
+    cd theme && pnpm install --frozen-lockfile && pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
 
 # Create deployable artifacts for extension and theme
 package: package-extension package-theme
