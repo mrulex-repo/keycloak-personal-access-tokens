@@ -21,6 +21,9 @@ dist/
 # Theme — keycloakify build output
 theme/dist_keycloak/
 
+# Maven shim dir created transiently by justfile build-theme
+theme/.mvn-shim/
+
 # E2E — Playwright artifacts
 playwright-report/
 test-results/

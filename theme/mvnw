@@ -1,0 +1,67 @@
+#!/bin/sh
+# Maven Wrapper Script — Apache Maven Wrapper 3.3.2
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See NOTICE at the project root for details.
+set -e
+
+# OS specific support.
+cygwin=false
+darwin=false
+mingw=false
+msys=false
+case "$(uname)" in
+  CYGWIN*)  cygwin=true  ;;
+  Darwin*)  darwin=true  ;;
+  MINGW*)   mingw=true   ;;
+  MSYS*)    msys=true    ;;
+esac
+
+# Locate the script's own directory to find .mvn/wrapper
+if [ -n "$BASH_SOURCE" ]; then
+  __MVNW_MYSELF="$BASH_SOURCE"
+elif command -v readlink > /dev/null 2>&1; then
+  __MVNW_MYSELF=$(readlink -f "$0")
+else
+  __MVNW_MYSELF="$0"
+fi
+__MVNW_DIR=$(dirname "$__MVNW_MYSELF")
+
+# Read maven-wrapper.properties
+WRAPPER_PROPERTIES="$__MVNW_DIR/.mvn/wrapper/maven-wrapper.properties"
+if [ ! -f "$WRAPPER_PROPERTIES" ]; then
+  echo "ERROR: .mvn/wrapper/maven-wrapper.properties not found." >&2
+  exit 1
+fi
+
+DISTRIBUTION_URL=$(sed -n 's/^distributionUrl=//p' "$WRAPPER_PROPERTIES" | tr -d '\r')
+
+if [ -z "$DISTRIBUTION_URL" ]; then
+  echo "ERROR: distributionUrl not set in maven-wrapper.properties." >&2
+  exit 1
+fi
+
+# Derive Maven version and local cache dir
+MVN_VERSION=$(echo "$DISTRIBUTION_URL" | sed -n 's/.*apache-maven-\([0-9.]*\)-bin.zip/\1/p')
+WRAPPER_CACHE_DIR="${HOME}/.m2/wrapper/dists/apache-maven-${MVN_VERSION}-bin"
+MVN_BIN="${WRAPPER_CACHE_DIR}/apache-maven-${MVN_VERSION}/bin/mvn"
+
+# Download and unpack if not already cached
+if [ ! -f "$MVN_BIN" ]; then
+  echo "Downloading Apache Maven ${MVN_VERSION}..."
+  mkdir -p "$WRAPPER_CACHE_DIR"
+  TMP_ZIP="${WRAPPER_CACHE_DIR}/maven.zip"
+  if command -v curl > /dev/null 2>&1; then
+    curl -fsSL "$DISTRIBUTION_URL" -o "$TMP_ZIP"
+  elif command -v wget > /dev/null 2>&1; then
+    wget -q "$DISTRIBUTION_URL" -O "$TMP_ZIP"
+  else
+    echo "ERROR: curl or wget is required to download Maven." >&2
+    exit 1
+  fi
+  unzip -q "$TMP_ZIP" -d "$WRAPPER_CACHE_DIR"
+  rm -f "$TMP_ZIP"
+  chmod +x "$MVN_BIN"
+  echo "Maven ${MVN_VERSION} ready."
+fi
+
+exec "$MVN_BIN" "$@"

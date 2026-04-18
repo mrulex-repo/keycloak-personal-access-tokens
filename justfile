@@ -13,7 +13,17 @@ build-extension:
 
 # Build the Account UI theme: lint, test, compile, and keycloakify build
 build-theme:
-    cd theme && pnpm install --frozen-lockfile && pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd theme
+    pnpm install --frozen-lockfile
+    # Expose mvnw as `mvn` so keycloakify (which hardcodes the name) can find it
+    SHIM_DIR="$(pwd)/.mvn-shim"
+    mkdir -p "$SHIM_DIR"
+    printf '#!/bin/sh\nexec "%s/mvnw" "$@"\n' "$(pwd)" > "$SHIM_DIR/mvn"
+    chmod +x "$SHIM_DIR/mvn"
+    export PATH="$SHIM_DIR:$PATH"
+    pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
 
 # Create deployable artifacts for extension and theme
 package: package-extension package-theme
