@@ -68,7 +68,7 @@ public class PersonalAccessTokenResource {
 
     PatUtils.validateTokenName(request.name(), user);
     PatUtils.validateExpires(request.expires());
-    PatUtils.validateRoles(request.roles());
+    PatUtils.validateRoles(request.roles(), user);
 
     String plaintext = PatUtils.generateToken();
     String hash = PatUtils.hashToken(plaintext);
@@ -112,11 +112,9 @@ public class PersonalAccessTokenResource {
   @Path("roles")
   @Produces(MediaType.APPLICATION_JSON)
   public Response listRoles() {
-    requireAuthenticatedUser();
-    RealmModel realm = session.getContext().getRealm();
+    UserModel user = requireAuthenticatedUser();
     List<PatRoleDto> roles =
-        realm
-            .getRolesStream()
+        user.getRealmRoleMappingsStream()
             .filter(role -> !role.getName().startsWith("default-roles-"))
             .map(role -> new PatRoleDto(role.getName(), role.getDescription()))
             .toList();
@@ -161,6 +159,10 @@ public class PersonalAccessTokenResource {
     PatCredentialData data = PatUtils.extractCredentialData(matched);
 
     if (PatUtils.isExpired(data.expires())) {
+      return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    if (!PatUtils.userHasAllRoles(user, data.roles())) {
       return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 

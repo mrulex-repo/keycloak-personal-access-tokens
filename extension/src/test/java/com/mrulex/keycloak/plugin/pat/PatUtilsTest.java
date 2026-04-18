@@ -17,6 +17,7 @@ import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Test;
 import org.keycloak.credential.CredentialModel;
 import org.keycloak.credential.UserCredentialManager;
+import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 
 class PatUtilsTest {
@@ -226,17 +227,26 @@ class PatUtilsTest {
 
   @Test
   void validateRoles_nonEmptyList_noException() {
-    assertThatNoException().isThrownBy(() -> PatUtils.validateRoles(List.of("maven-read")));
+    UserModel user = userWithRealmRoles("maven-read");
+    assertThatNoException().isThrownBy(() -> PatUtils.validateRoles(List.of("maven-read"), user));
+  }
+
+  @Test
+  void validateRoles_roleNotAssignedToUser_throws400() {
+    UserModel user = userWithRealmRoles("other-role");
+    assertBadRequest(() -> PatUtils.validateRoles(List.of("maven-read"), user));
   }
 
   @Test
   void validateRoles_null_throws400() {
-    assertBadRequest(() -> PatUtils.validateRoles(null));
+    UserModel user = userWithRealmRoles();
+    assertBadRequest(() -> PatUtils.validateRoles(null, user));
   }
 
   @Test
   void validateRoles_empty_throws400() {
-    assertBadRequest(() -> PatUtils.validateRoles(List.of()));
+    UserModel user = userWithRealmRoles();
+    assertBadRequest(() -> PatUtils.validateRoles(List.of(), user));
   }
 
   // -------------------------------------------------------------------------
@@ -247,6 +257,20 @@ class PatUtilsTest {
     assertThatExceptionOfType(WebApplicationException.class)
         .isThrownBy(callable)
         .satisfies(e -> assertThat(e.getResponse().getStatus()).isEqualTo(400));
+  }
+
+  private UserModel userWithRealmRoles(String... roleNames) {
+    UserModel user = mock(UserModel.class);
+    Stream<RoleModel> roleStream =
+        Stream.of(roleNames)
+            .map(
+                name -> {
+                  RoleModel role = mock(RoleModel.class);
+                  when(role.getName()).thenReturn(name);
+                  return role;
+                });
+    when(user.getRealmRoleMappingsStream()).thenReturn(roleStream);
+    return user;
   }
 
   private UserModel userWithPats(CredentialModel... credentials) {

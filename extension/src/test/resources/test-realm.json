@@ -83,7 +83,8 @@
       "lastName": "User",
       "enabled": true,
       "requiredActions": [],
-      "credentials": [{ "type": "password", "value": "brutepass", "temporary": false }]
+      "credentials": [{ "type": "password", "value": "brutepass", "temporary": false }],
+      "realmRoles": ["maven-read"]
     },
     {
       "username": "carol",

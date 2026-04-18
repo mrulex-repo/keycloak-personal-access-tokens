@@ -16,7 +16,9 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.keycloak.common.ClientConnection;
 import org.keycloak.credential.CredentialModel;
@@ -155,10 +157,21 @@ public final class PatUtils {
     }
   }
 
-  public static void validateRoles(List<String> roles) {
+  public static void validateRoles(List<String> roles, UserModel user) {
     if (roles == null || roles.isEmpty()) {
       throw badRequest("roles must be a non-empty list");
     }
+    List<String> unassigned =
+        roles.stream().filter(r -> !userHasAllRoles(user, List.of(r))).toList();
+    if (!unassigned.isEmpty()) {
+      throw badRequest("roles not assigned to user: " + String.join(", ", unassigned));
+    }
+  }
+
+  public static boolean userHasAllRoles(UserModel user, List<String> roles) {
+    Set<String> userRoles =
+        user.getRealmRoleMappingsStream().map(role -> role.getName()).collect(Collectors.toSet());
+    return userRoles.containsAll(roles);
   }
 
   public static boolean isExpired(String expires) {
