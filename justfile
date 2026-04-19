@@ -13,23 +13,17 @@ build-extension:
 
 # Build the Account UI theme: lint, test, compile, and keycloakify build
 build-theme:
-    #!/usr/bin/env sh
-    set -eu
-    cd theme
-    pnpm install --frozen-lockfile
-    # theme/mvn delegates to mvnw; add the theme dir to PATH so keycloakify finds it
-    export PATH="$(pwd):$PATH"
-    pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
+    cd theme && pnpm install --frozen-lockfile && pnpm run lint:fix && pnpm run test && pnpm run build-keycloak-theme
 
 # Create deployable artifacts for extension and theme
 package: package-extension package-theme
 
 # Create the extension shadow JAR and copy it to build/
 package-extension:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
     VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
-    if [[ -z "$VERSION" ]]; then
+    if [ -z "$VERSION" ]; then
         echo "No release tag found — building extension without version."
         VERSION_ARG=""
     else
@@ -45,10 +39,10 @@ package-extension:
 
 # Copy the theme JAR to build/
 package-theme:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
     VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
-    if [[ -z "$VERSION" ]]; then
+    if [ -z "$VERSION" ]; then
         echo "No release tag found — building theme without version."
     else
         echo "Baking version ${VERSION} into theme JAR..."
@@ -80,8 +74,8 @@ clean-theme:
 
 # Start container, run Playwright, stop container (build must have run first)
 e2e-run:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
     just e2e-up
     trap 'just e2e-down' EXIT
     cd e2e && pnpm test
@@ -99,8 +93,8 @@ e2e-install:
 
 # Start the E2E Keycloak container (requires `just build` and `just package` to have run first)
 e2e-up:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
     cd e2e
     docker compose down --remove-orphans
     docker compose up -d --force-recreate
@@ -135,12 +129,12 @@ e2e-up:
 # tag, and push it to origin. Idempotent: skips steps already done.
 # Bump rules (highest wins): breaking/type! → major | feat/feature → minor | else → patch
 release:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
 
     LAST_TAG=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1)
 
-    if [[ -z "$LAST_TAG" ]]; then
+    if [ -z "$LAST_TAG" ]; then
         echo "No release tag found — treating as v0.0.0"
         LAST_TAG="v0.0.0"
         COMMITS=$(git log --pretty=format:"%s")
@@ -149,7 +143,7 @@ release:
         COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=format:"%s")
     fi
 
-    if [[ -z "$COMMITS" ]]; then
+    if [ -z "$COMMITS" ]; then
         echo "No commits since $LAST_TAG — nothing to release."
         exit 0
     fi
@@ -162,6 +156,8 @@ release:
 
     # Walk commits and determine the required bump level
     BUMP="patch"
+    COMMIT_FILE=$(mktemp)
+    printf '%s\n' "$COMMITS" > "$COMMIT_FILE"
     while IFS= read -r msg; do
         # Breaking: any conventional-commit type with ! (e.g. feat!:, fix!:)
         # or explicit break/breaking prefix
@@ -170,9 +166,10 @@ release:
         elif echo "$msg" | grep -qiE '^(break|breaking)(\([^)]+\))?:'; then
             BUMP="major"; break
         elif echo "$msg" | grep -qiE '^(feat|feature)(\([^)]+\))?:'; then
-            [[ "$BUMP" != "major" ]] && BUMP="minor"
+            [ "$BUMP" != "major" ] && BUMP="minor"
         fi
-    done <<< "$COMMITS"
+    done < "$COMMIT_FILE"
+    rm -f "$COMMIT_FILE"
 
     # Compute next version
     case "$BUMP" in
@@ -202,13 +199,13 @@ release:
 # Requires GITHUB_TOKEN env var. Reads GITHUB_REPO (owner/repo) from the git
 # remote origin, or override by setting the env var explicitly.
 publish:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
 
     : "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
 
     TAG=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1)
-    if [[ -z "$TAG" ]]; then
+    if [ -z "$TAG" ]; then
         echo "No release tag found. Run 'just release' first."
         exit 1
     fi
@@ -217,8 +214,8 @@ publish:
     EXT_JAR="build/keycloak-personal-access-tokens.jar"
     THEME_JAR="build/keycloak-personal-access-tokens-theme.jar"
 
-    [[ -f "$EXT_JAR" ]]   || { echo "Missing $EXT_JAR — run 'just package' first."; exit 1; }
-    [[ -f "$THEME_JAR" ]] || { echo "Missing $THEME_JAR — run 'just package' first."; exit 1; }
+    [ -f "$EXT_JAR" ]   || { echo "Missing $EXT_JAR — run 'just package' first."; exit 1; }
+    [ -f "$THEME_JAR" ] || { echo "Missing $THEME_JAR — run 'just package' first."; exit 1; }
 
     # Derive owner/repo from remote origin, allow env override
     REPO="${GITHUB_REPO:-$(git remote get-url origin | sed -E 's#.*github\.com[/:](.+/.+)\.git#\1#; s#.*github\.com[/:](.+/.+)#\1#')}"
@@ -232,7 +229,7 @@ publish:
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "${API}/releases/tags/${TAG}")
-    if [[ "$EXISTING" == "200" ]]; then
+    if [ "$EXISTING" = "200" ]; then
         echo "GitHub release ${TAG} already published — nothing to do."
         exit 0
     fi
@@ -247,7 +244,7 @@ publish:
     UPLOAD_URL=$(echo "$RELEASE_JSON" | grep -o '"upload_url":"[^"]*"' | cut -d'"' -f4 | sed 's/{?name,label}//')
     RELEASE_URL=$(echo "$RELEASE_JSON" | grep -o '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
 
-    if [[ -z "$UPLOAD_URL" ]]; then
+    if [ -z "$UPLOAD_URL" ]; then
         echo "Failed to create release. Response:"
         echo "$RELEASE_JSON"
         exit 1
@@ -255,7 +252,8 @@ publish:
 
     # 3. Upload artifacts with versioned names
     _upload() {
-        local file="$1" asset_name="$2"
+        local file="$1"
+        local asset_name="$2"
         echo "  Uploading ${asset_name}..."
         curl -fsSL -X POST "${UPLOAD_URL}?name=${asset_name}" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -279,8 +277,8 @@ ci: ci-verify package
 
 # Run full build and e2e verification, then print a timing + artifact summary
 ci-verify:
-    #!/usr/bin/env bash
-    set -euo pipefail
+    #!/usr/bin/env sh
+    set -eu
     t0=$(date +%s)
 
     just build
