@@ -241,8 +241,8 @@ publish:
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -d "{\"tag_name\":\"${TAG}\",\"name\":\"Release ${TAG}\",\"generate_release_notes\":true}")
 
-    UPLOAD_URL=$(echo "$RELEASE_JSON" | grep -o '"upload_url":"[^"]*"' | cut -d'"' -f4 | sed 's/{?name,label}//')
-    RELEASE_URL=$(echo "$RELEASE_JSON" | grep -o '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+    UPLOAD_URL=$(echo "$RELEASE_JSON" | grep -o '"upload_url": *"[^"]*"' | cut -d'"' -f4 | sed 's/{?name,label}//')
+    RELEASE_URL=$(echo "$RELEASE_JSON" | grep -o '"html_url": *"[^"]*"' | head -1 | cut -d'"' -f4)
 
     if [ -z "$UPLOAD_URL" ]; then
         echo "Failed to create release. Response:"
