@@ -247,4 +247,4 @@ The `release` recipe follows conventional commits: `feat:` → minor bump, `fix:
 
 ## License
 
-[MIT](LICENSE)
+[GPL-3.0](LICENSE)
