@@ -25,6 +25,7 @@ theme/dist_keycloak/
 playwright-report/
 test-results/
 e2e/playwright/.auth/
+e2e/.browsers/
 
 # Credentials / env
 .env

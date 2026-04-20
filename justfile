@@ -78,7 +78,7 @@ e2e-run:
     set -eu
     just e2e-up
     trap 'just e2e-down' EXIT
-    cd e2e && pnpm test
+    cd e2e && PLAYWRIGHT_BROWSERS_PATH=.browsers pnpm test
 
 # Run the full E2E suite: build → package → start container → run Playwright → stop container
 e2e: build package e2e-run
@@ -89,7 +89,7 @@ e2e-down:
 
 # Install Playwright browsers (run once after pnpm install)
 e2e-install:
-    cd e2e && pnpm install && pnpm run install-browsers
+    cd e2e && pnpm install && PLAYWRIGHT_BROWSERS_PATH=.browsers pnpm run install-browsers
 
 # Start the E2E Keycloak container (requires `just build` and `just package` to have run first)
 e2e-up:
@@ -287,6 +287,7 @@ ci-verify:
     just package
     t_package=$(date +%s)
 
+    just e2e-install
     just e2e-run
     t_e2e=$(date +%s)
 
