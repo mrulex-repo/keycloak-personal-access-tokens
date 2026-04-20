@@ -43,12 +43,12 @@ package-theme:
     set -eu
     VERSION=$(git tag --list 'v*.*.*' --sort=-version:refname | head -1 | sed 's/^v//')
     if [ -z "$VERSION" ]; then
-        echo "No release tag found — building theme without version."
+        echo "No release tag found — packaging theme without version."
     else
         echo "Baking version ${VERSION} into theme JAR..."
         ORIG=$(cat theme/package.json)
         trap 'printf "%s" "$ORIG" > theme/package.json' EXIT
-        cd theme && pnpm pkg set version="${VERSION}" && pnpm run build-keycloak-theme
+        (cd theme && pnpm pkg set version="${VERSION}" && pnpm run build-keycloak-theme)
     fi
     mkdir -p build
     rm -rf "build/keycloak-personal-access-tokens-theme.jar"
