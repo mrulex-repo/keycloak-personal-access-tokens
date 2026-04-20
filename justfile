@@ -96,7 +96,7 @@ e2e-up:
     #!/usr/bin/env sh
     set -eu
     cd e2e
-    docker compose down --remove-orphans
+    docker compose down
     docker compose up -d --force-recreate
     echo "Waiting for Keycloak E2E container to be ready..."
     for i in $(seq 1 90); do
