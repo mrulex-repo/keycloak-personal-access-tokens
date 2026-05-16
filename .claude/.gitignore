@@ -3,3 +3,5 @@ changes_detected
 changes_pending
 pre_tool_state
 last_verified_state
+notification_pending
+notify_id

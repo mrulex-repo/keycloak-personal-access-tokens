@@ -261,15 +261,19 @@ class PatUtilsTest {
 
   private UserModel userWithRealmRoles(String... roleNames) {
     UserModel user = mock(UserModel.class);
-    Stream<RoleModel> roleStream =
+    List<RoleModel> roles =
         Stream.of(roleNames)
             .map(
                 name -> {
                   RoleModel role = mock(RoleModel.class);
                   when(role.getName()).thenReturn(name);
-                  return role;
-                });
-    when(user.getRealmRoleMappingsStream()).thenReturn(roleStream);
+                  when(role.isClientRole()).thenReturn(false);
+                  when(role.isComposite()).thenReturn(false);
+                  return (RoleModel) role;
+                })
+            .toList();
+    when(user.getRealmRoleMappingsStream()).thenReturn(roles.stream());
+    when(user.getRoleMappingsStream()).thenReturn(roles.stream());
     return user;
   }
 

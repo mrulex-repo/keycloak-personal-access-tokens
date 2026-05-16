@@ -24,6 +24,7 @@ import org.keycloak.credential.CredentialModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.RoleUtils;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 
@@ -114,7 +115,8 @@ public class PersonalAccessTokenResource {
   public Response listRoles() {
     UserModel user = requireAuthenticatedUser();
     List<PatRoleDto> roles =
-        user.getRealmRoleMappingsStream()
+        RoleUtils.getDeepUserRoleMappings(user).stream()
+            .filter(role -> !role.isClientRole())
             .filter(role -> !role.getName().startsWith("default-roles-"))
             .map(role -> new PatRoleDto(role.getName(), role.getDescription()))
             .toList();

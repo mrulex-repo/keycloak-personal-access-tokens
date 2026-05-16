@@ -25,6 +25,7 @@ import org.keycloak.credential.CredentialModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.RoleUtils;
 import org.keycloak.services.managers.BruteForceProtector;
 
 public final class PatUtils {
@@ -170,7 +171,10 @@ public final class PatUtils {
 
   public static boolean userHasAllRoles(UserModel user, List<String> roles) {
     Set<String> userRoles =
-        user.getRealmRoleMappingsStream().map(role -> role.getName()).collect(Collectors.toSet());
+        RoleUtils.getDeepUserRoleMappings(user).stream()
+            .filter(role -> !role.isClientRole())
+            .map(role -> role.getName())
+            .collect(Collectors.toSet());
     return userRoles.containsAll(roles);
   }
 
