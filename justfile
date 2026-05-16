@@ -48,7 +48,7 @@ package-theme:
         echo "Baking version ${VERSION} into theme JAR..."
         ORIG=$(cat theme/package.json)
         trap 'printf "%s" "$ORIG" > theme/package.json' EXIT
-        (cd theme && pnpm pkg set version="${VERSION}" && pnpm run build-keycloak-theme)
+        (cd theme && npm pkg set version="${VERSION}" && pnpm run build-keycloak-theme)
     fi
     mkdir -p build
     rm -rf "build/keycloak-personal-access-tokens-theme.jar"
