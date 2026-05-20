@@ -2,11 +2,15 @@ import { useState } from "react";
 import {
   ActionGroup,
   Button,
+  Divider,
   Form,
   FormGroup,
   HelperText,
   HelperTextItem,
+  MenuSearch,
+  MenuSearchInput,
   MenuToggle,
+  SearchInput,
   Select,
   SelectList,
   SelectOption,
@@ -68,28 +72,50 @@ function useCreatePatForm(ctx: PatApiContext, onCreated: (pat: PatCreated) => vo
   return { name, setName, selectedRoles, toggleRole, expiresDate, setExpiresDate, errors, submitting, submit };
 }
 
-function RoleSelect({ roles, selected, onToggle }: {
-  roles: PatRole[];
-  selected: string[];
-  onToggle: (role: string) => void;
-}) {
+type RoleSelectProps = { roles: PatRole[]; selected: string[]; onToggle: (role: string) => void };
+
+function useRoleSelectState(roles: PatRole[]) {
   const [isOpen, setIsOpen] = useState(false);
+  const [filter, setFilter] = useState("");
+  const sorted = [...roles].sort((a, b) => a.name.localeCompare(b.name));
+  const visibleRoles = filter
+    ? sorted.filter((r) => r.name.toLowerCase().includes(filter.toLowerCase()))
+    : sorted;
+  function handleOpenChange(open: boolean) {
+    setIsOpen(open);
+    if (!open) setFilter("");
+  }
+  return { isOpen, filter, setFilter, visibleRoles, handleOpenChange };
+}
+
+function RoleSelect({ roles, selected, onToggle }: RoleSelectProps) {
+  const { isOpen, filter, setFilter, visibleRoles, handleOpenChange } = useRoleSelectState(roles);
   const toggleText = selected.length > 0 ? selected.join(", ") : msg.selectRoles;
 
   return (
     <Select
       isOpen={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={handleOpenChange}
       toggle={(ref: React.Ref<MenuToggleElement>) => (
-        <MenuToggle ref={ref} onClick={() => setIsOpen((o) => !o)} isExpanded={isOpen}>
+        <MenuToggle ref={ref} onClick={() => handleOpenChange(!isOpen)} isExpanded={isOpen}>
           {toggleText}
         </MenuToggle>
       )}
       onSelect={(_, value) => onToggle(value as string)}
       aria-label={msg.rolesLabel}
     >
+      <MenuSearch>
+        <MenuSearchInput>
+          <SearchInput
+            value={filter}
+            onChange={(_, v) => setFilter(v)}
+            onClear={() => setFilter("")}
+          />
+        </MenuSearchInput>
+      </MenuSearch>
+      <Divider />
       <SelectList>
-        {roles.map((role) => (
+        {visibleRoles.map((role) => (
           <SelectOption key={role.name} value={role.name} hasCheckbox isSelected={selected.includes(role.name)}>
             {role.name}
           </SelectOption>
