@@ -2,7 +2,7 @@
 
 A Keycloak plugin that lets users create **personal access tokens (PATs)** — scoped, named tokens that can be used as passwords anywhere HTTP Basic Auth is accepted.
 
-Built for Keycloak 26.
+Built for Keycloak 26.7 or newer.
 
 ---
 
@@ -47,7 +47,7 @@ Pass `X-Required-Role: <role>` in the request to let Keycloak enforce the check 
 
 ### Prerequisites
 
-- Keycloak 26
+- Keycloak 26.7 or newer (the `BruteForceProtector` API changed in 26.7; use release 0.2.x for Keycloak 26.5 and older)
 - Java 21 or newer runtime (provided by Keycloak)
 
 ### 1. Download the JARs

@@ -71,7 +71,7 @@ class PatBasicAuthAuthenticatorTest {
     assertThat(shadowJar).exists();
 
     KeycloakContainer container =
-        new KeycloakContainer("quay.io/keycloak/keycloak:26.3.4")
+        new KeycloakContainer("quay.io/keycloak/keycloak:26.8.1")
             .withCopyToContainer(
                 MountableFile.forHostPath(shadowJar.getAbsolutePath()),
                 "/opt/keycloak/providers/keycloak-personal-access-tokens.jar")

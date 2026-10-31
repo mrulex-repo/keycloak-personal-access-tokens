@@ -25,6 +25,7 @@ import org.keycloak.credential.CredentialModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.credential.PasswordCredentialModel;
 import org.keycloak.models.utils.RoleUtils;
 import org.keycloak.services.managers.BruteForceProtector;
 
@@ -42,6 +43,15 @@ public final class PatUtils {
   private static final int ARGON2_ITER = 5;
   private static final int ARGON2_PARALLEL = 1;
   private static final int ARGON2_LENGTH = 64;
+
+  /**
+   * Authentication categories reported to the brute-force protector. Since Keycloak 26.6 the
+   * default protector ignores failures whose categories are all outside password, OTP and recovery
+   * codes, so the authenticator's own reference category ("pat") would not be counted. A personal
+   * access token stands in for the password in HTTP Basic Auth, so its failures count as primary
+   * (password) failures, not as secondary (OTP) ones.
+   */
+  private static final Set<String> BRUTE_FORCE_CATEGORIES = Set.of(PasswordCredentialModel.TYPE);
 
   private PatUtils() {}
 
@@ -210,7 +220,8 @@ public final class PatUtils {
     BruteForceProtector protector = session.getProvider(BruteForceProtector.class);
     if (protector == null) return;
     ClientConnection connection = session.getContext().getConnection();
-    protector.failedLogin(realm, user, connection, session.getContext().getUri());
+    protector.failedLogin(
+        realm, user, connection, session.getContext().getUri(), BRUTE_FORCE_CATEGORIES);
   }
 
   // -------------------------------------------------------------------------
