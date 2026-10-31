@@ -76,6 +76,8 @@ clean-theme:
 e2e-run:
     #!/usr/bin/env sh
     set -eu
+    override=$(just _playwright-host-platform-override)
+    if [ -n "$override" ]; then export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="$override"; fi
     just e2e-up
     trap 'just e2e-down' EXIT
     cd e2e && PLAYWRIGHT_BROWSERS_PATH=.browsers pnpm test
@@ -89,7 +91,31 @@ e2e-down:
 
 # Install Playwright browsers (run once after pnpm install)
 e2e-install:
+    #!/usr/bin/env sh
+    set -eu
+    override=$(just _playwright-host-platform-override)
+    if [ -n "$override" ]; then export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="$override"; fi
     cd e2e && pnpm install && PLAYWRIGHT_BROWSERS_PATH=.browsers pnpm run install-browsers
+
+# Print the Playwright host platform override this machine needs, or nothing.
+# Playwright has no browser builds for Ubuntu 26.04 yet, so there it uses the Ubuntu 24.04 builds.
+# Everywhere else, including the GoCD agents, it prints nothing and Playwright detects the host
+# itself. A PLAYWRIGHT_HOST_PLATFORM_OVERRIDE already set in the environment is kept as is.
+_playwright-host-platform-override:
+    #!/usr/bin/env sh
+    set -eu
+    if [ -n "${PLAYWRIGHT_HOST_PLATFORM_OVERRIDE:-}" ]; then
+        echo "$PLAYWRIGHT_HOST_PLATFORM_OVERRIDE"
+        exit 0
+    fi
+    [ -r /etc/os-release ] || exit 0
+    . /etc/os-release
+    if [ "${ID:-}" = "ubuntu" ] && [ "${VERSION_ID:-}" = "26.04" ]; then
+        case "$(uname -m)" in
+            aarch64|arm64) echo "ubuntu24.04-arm64" ;;
+            *) echo "ubuntu24.04-x64" ;;
+        esac
+    fi
 
 # Start the E2E Keycloak container (requires `just build` and `just package` to have run first)
 e2e-up:
