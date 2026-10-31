@@ -46,8 +46,11 @@ package-theme:
         echo "No release tag found — packaging theme without version."
     else
         echo "Baking version ${VERSION} into theme JAR..."
-        ORIG=$(cat theme/package.json)
-        trap 'printf "%s" "$ORIG" > theme/package.json' EXIT
+        # Restore package.json byte for byte after the version bump (copying back onto the file
+        # keeps its permissions; $(cat ...) would drop the trailing newline).
+        PACKAGE_JSON_BACKUP=$(mktemp)
+        cp theme/package.json "$PACKAGE_JSON_BACKUP"
+        trap 'cp "$PACKAGE_JSON_BACKUP" theme/package.json && rm -f "$PACKAGE_JSON_BACKUP"' EXIT
         (cd theme && pnpm install --frozen-lockfile && npm pkg set version="${VERSION}" && pnpm run build-keycloak-theme)
     fi
     mkdir -p build
