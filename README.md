@@ -48,7 +48,7 @@ Pass `X-Required-Role: <role>` in the request to let Keycloak enforce the check 
 ### Prerequisites
 
 - Keycloak 26
-- Java 21 runtime (provided by Keycloak)
+- Java 21 or newer runtime (provided by Keycloak)
 
 ### 1. Download the JARs
 
@@ -199,7 +199,7 @@ public ResponseEntity<?> read() { ... }
 
 ### Prerequisites
 
-- Java 21
+- JDK 25 (Gradle toolchain; bytecode targets Java 21 via `--release 21` so the jar runs on the Keycloak server JVM)
 - Docker (for integration tests and E2E)
 - Node.js + pnpm (for the Account UI theme)
 - [`just`](https://just.systems) task runner
@@ -224,7 +224,7 @@ just ci
 
 ```
 keycloak-personal-access-tokens/
-├── extension/      ← Keycloak SPI extension (Java 21, Gradle)
+├── extension/      ← Keycloak SPI extension (JDK 25 toolchain, Java 21 bytecode, Gradle)
 ├── theme/          ← Account UI theme (React/TypeScript, keycloakify)
 ├── e2e/            ← End-to-end tests (Playwright + Docker)
 ├── build/          ← Packaged JARs (git-ignored)

@@ -19,8 +19,15 @@ version = "see-git-tag"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+// Build with JDK 25, but emit bytecode for the Java runtime bundled in the Keycloak server image
+// (quay.io/keycloak/keycloak 26.x ships OpenJDK 21). The extension jar is loaded into that JVM,
+// so raise this only once the Keycloak image runs a newer Java.
+tasks.withType<JavaCompile>().configureEach {
+    options.release = (project.extra["keycloakJavaRuntimeVersion"] as String).toInt()
 }
 
 configurations {
@@ -69,6 +76,8 @@ jacoco {
 tasks.named<Test>("test") {
     dependsOn(tasks.shadowJar)
     useJUnitPlatform()
+    // Mockito's inline mock maker attaches its agent at runtime; JDK 21+ warns about this (JEP 451).
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
     doFirst {
         // configurations.jacocoAgent is a wrapper JAR; the real agent is jacocoagent.jar inside it.
         val agentDir = layout.buildDirectory.dir("jacocoAgent").get().asFile
