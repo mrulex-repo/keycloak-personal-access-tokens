@@ -182,10 +182,10 @@ public class PersonalAccessTokenResource {
   private UserModel requireAuthenticatedUser() {
     AuthenticationManager.AuthResult auth =
         new AppAuthManager.BearerTokenAuthenticator(session).authenticate();
-    if (auth == null || auth.getUser() == null) {
+    if (auth == null || auth.user() == null) {
       throw new NotAuthorizedException("Bearer token required");
     }
-    return auth.getUser();
+    return auth.user();
   }
 
   private static String[] parseBasicCredentials(String authHeader) {
